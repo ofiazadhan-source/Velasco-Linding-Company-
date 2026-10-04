@@ -1,86 +1,65 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LINDING COOP - Apply</title>
-<style>body{font-family:Arial;padding:15px;background:#f5f5f5}input,select,button{width:100%;padding:12px;margin:6px 0}button{background:green;color:white;border:none;border-radius:8px;font-weight:bold}</style>
+<style>body{font-family:Arial;padding:12px;background:#f5f5f5}.card{background:white;padding:15px;border-radius:14px} input,select,button{width:100%;padding:12px;margin:6px 0;border:1px solid #ddd;border-radius:8px} button{background:#ff6a00;color:white;border:none;font-weight:bold;font-size:16px} #preview{width:100%;max-width:300px;display:none;margin-top:10px;border-radius:10px}</style>
 </head><body>
-<h2>LINDING COOP Loan Apply</h2>
-<form id="loanForm">
+<div class="card">
+<h2>LINDING COOP - Apply Loan</h2>
+<form id="f">
 <input id="fullName" placeholder="Full Name" required>
 <input id="address" placeholder="Address" required>
 <input id="contact" placeholder="Contact No." required>
 <input id="coMaker" placeholder="Co-Maker Name" required>
-<input id="coMakerContact" placeholder="Co-Maker Contact No." required>
+<input id="coMakerContact" placeholder="Co-Maker Contact" required>
 <input id="coMakerAddress" placeholder="Co-Maker Address" required>
-<select id="idType" required><option value="">Select ID Type</option><option>UMID</option><option>SSS</option><option>National ID</option><option>Driver's License</option></select>
-<label>Upload ID (Auto Compress to Smallest):</label>
+<select id="idType" required><option value="">Select ID Type</option><option>UMID</option><option>SSS</option><option>National ID</option></select>
+<label>Upload ID (Auto Compress to ~70KB):</label>
 <input type="file" id="idFile" accept="image/*" required>
-<img id="preview" style="width:100%;max-width:300px;display:none;border:1px solid #ccc;margin-top:10px">
-<p id="sizeInfo"></p>
+<img id="preview"><p id="info" style="font-size:12px;color:green"></p>
 <input id="amount" type="number" placeholder="Loan Amount" required>
-<button type="submit" id="submitBtn">SUBMIT APPLICATION</button>
+<button type="submit" id="btn">SUBMIT APPLICATION</button>
 </form>
+</div>
 <script type="module">
 import { db } from "./firebase-config.js";
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-let compressedBase64 = "";
-const fileInput = document.getElementById('idFile');
-const preview = document.getElementById('preview');
-const sizeInfo = document.getElementById('sizeInfo');
-
-fileInput.addEventListener('change', async (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const originalKB = (file.size/1024).toFixed(0);
-  sizeInfo.textContent = `Original: ${originalKB}KB - Compressing...`;
-  compressedBase64 = await compressImage(file);
-  const newKB = (compressedBase64.length * 0.75 / 1024).toFixed(0);
-  preview.src = compressedBase64;
-  preview.style.display='block';
-  sizeInfo.textContent = `Original: ${originalKB}KB → Compressed: ${newKB}KB (95% smaller!)`;
+let base64="";
+const fileInput=document.getElementById('idFile'), preview=document.getElementById('preview'), info=document.getElementById('info');
+fileInput.addEventListener('change', async e=>{
+ const file=e.target.files[0]; if(!file)return;
+ const orig=(file.size/1024).toFixed(0);
+ info.textContent=`Original ${orig}KB - Compressing...`;
+ base64=await compress(file);
+ const comp=(base64.length*0.75/1024).toFixed(0);
+ preview.src=base64; preview.style.display='block';
+ info.textContent=`Original: ${orig}KB → Compressed: ${comp}KB (pinaka maliit!)`;
 });
-
-function compressImage(file){
-  return new Promise((resolve)=>{
-    const reader = new FileReader();
-    reader.onload = (ev)=>{
-      const img = new Image();
-      img.onload = ()=>{
-        const canvas = document.createElement('canvas');
-        let width = img.width, height = img.height;
-        const maxSize = 500; // pinaka maliit pero malinaw pa rin
-        if(width>height){ if(width>maxSize){ height*=maxSize/width; width=maxSize; } }
-        else{ if(height>maxSize){ width*=maxSize/height; height=maxSize; } }
-        canvas.width=width; canvas.height=height;
-        canvas.getContext('2d').drawImage(img,0,0,width,height);
-        resolve(canvas.toDataURL('image/jpeg', 0.3)); // 30% quality = pinaka maliit
-      };
-      img.src=ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+function compress(file){
+ return new Promise(res=>{
+  const r=new FileReader();
+  r.onload=ev=>{
+   const img=new Image();
+   img.onload=()=>{
+    const c=document.createElement('canvas'); let w=img.width,h=img.height; const max=500;
+    if(w>h){ if(w>max){h*=max/w;w=max}} else{if(h>max){w*=max/h;h=max}}
+    c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+    res(c.toDataURL('image/jpeg',0.28));
+   }; img.src=ev.target.result;
+  }; r.readAsDataURL(file);
+ });
 }
-
-document.getElementById('loanForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const btn = document.getElementById('submitBtn');
-  btn.textContent="UPLOADING..."; btn.disabled=true;
-  try{
-    await addDoc(collection(db,"loans"),{
-      fullName: fullName.value,
-      address: address.value,
-      contact: contact.value,
-      coMaker: coMaker.value,
-      coMakerContact: document.getElementById('coMakerContact').value,
-      coMakerAddress: document.getElementById('coMakerAddress').value,
-      idType: idType.value,
-      idImageBase64: compressedBase64, // naka-compress na!
-      amount: Number(amount.value),
-      status: "PENDING",
-      createdAt: serverTimestamp()
-    });
-    alert("SUCCESS! Na-compress at na-save na!");
-    window.location.href="status.html?name="+encodeURIComponent(fullName.value);
-  }catch(err){ alert("Error: "+err.message); btn.textContent="SUBMIT"; btn.disabled=false; }
+document.getElementById('f').addEventListener('submit', async e=>{
+ e.preventDefault();
+ const btn=document.getElementById('btn'); btn.textContent="UPLOADING..."; btn.disabled=true;
+ try{
+  const ref=await addDoc(collection(db,"loans"),{
+   fullName:fullName.value, address:address.value, contact:contact.value,
+   coMaker:coMaker.value, coMakerContact:coMakerContact.value, coMakerAddress:coMakerAddress.value,
+   idType:idType.value, idImageBase64:base64, amount:Number(amount.value),
+   status:"PENDING", createdAt:serverTimestamp()
+  });
+  alert("SUCCESS! Compressed to ~70KB!");
+  location.href="status.html?id="+ref.id;
+ }catch(err){ alert(err.message); btn.textContent="SUBMIT"; btn.disabled=false; }
 });
 </script></body></html>
