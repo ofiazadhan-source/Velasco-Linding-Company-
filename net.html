@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINDING COOP - Net Profit Detailed</title>
+<style>
+body{font-family:"Segoe UI",Arial;padding:10px;background:#f5f5f5;}
+.container{max-width:1100px;margin:auto;background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+h1{color:#ff6b35;text-align:center;}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-top:20px;}
+.box{padding:18px;border-radius:12px;color:white;}
+.box div{font-size:13px;opacity:0.9} .box h2{margin:8px 0 0 0;font-size:24px;}
+select,input{width:100%;padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:8px;}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left;} th{background:#222;color:white;}
+.green{color:#28a745;font-weight:bold;} .red{color:#dc3545;font-weight:bold;}
+.borrower-card{border:1px solid #ddd;border-radius:10px;margin:12px 0;overflow:hidden;}
+.borrower-head{padding:12px 15px;background:#fff8f0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.borrower-head:hover{background:#ffefe6;}
+.payments{ display:none; padding:0 15px 15px 15px; background:#fafafa; }
+.payments table th{background:#ff6b35;}
+.badge{padding:4px 8px;border-radius:20px;font-size:11px;color:white;}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>💰 LINDING COOP - NET PROFIT</h1>
+
+<div class="summary">
+  <div class="box" style="background:#ff6b35;"><div>Total Pinautang</div><h2 id="cap">₱0</h2></div>
+  <div class="box" style="background:#28a745;"><div>Total Nakolekta</div><h2 id="collected">₱0</h2></div>
+  <div class="box" style="background:#111;"><div>NET PROFIT (Tubo)</div><h2 id="net">₱0</h2></div>
+  <div class="box" style="background:#17a2b8;"><div>Capital Bumalik</div><h2 id="capReturn">₱0</h2></div>
+</div>
+
+<h3 style="margin-top:25px;">Filter by Name</h3>
+<select id="filterName"><option value="all">-- Lahat ng Name --</option></select>
+
+<h3>Breakdown - Click name para makita hulog</h3>
+<div id="borrowerList"></div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig = { apiKey: "AIzaSyDk3ZbOXuw3PEfJzdt8AI2ueJq5yksfekE", authDomain: "dhan-siomai-pos-fe1e5.firebaseapp.com", projectId: "dhan-siomai-pos-fe1e5", storageBucket: "dhan-siomai-pos-fe1e5.firebasestorage.app", messagingSenderId: "305932123173", appId: "1:305932123173:web:f27894a2d5e6e6ab8253cc" };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+function formatDate(d){ if(!d) return ""; return new Date(d).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'}); }
+
+const loansCol = collection(db, "loans");
+let allLoans = [];
+
+onSnapshot(loansCol, (snap)=>{
+  allLoans=[]; snap.forEach(d=>allLoans.push({id:d.id,...d.data()}));
+  render();
+});
+
+document.getElementById("filterName").addEventListener("change", render);
+
+function render(){
+  let filter = document.getElementById("filterName").value;
+  let loans = filter==="all" ? allLoans : allLoans.filter(l=>l.name===filter);
+
+  // update filter options
+  let names = [...new Set(allLoans.map(l=>l.name))];
+  let sel = document.getElementById("filterName");
+  let current = sel.value;
+  sel.innerHTML = '<option value="all">-- Lahat ng Name --</option>' + names.map(n=>`<option value="${n}" ${current===n?'selected':''}>${n}</option>`).join('');
+
+  let totalCap=0, totalCollected=0, totalInterestCollected=0, totalPenaltyCollected=0, totalCapReturn=0;
+  let html="";
+
+  loans.forEach(l=>{
+    let principal = parseFloat(l.amount)||0;
+    let totalPay = parseFloat(l.totalPay)||0;
+    let paid = parseFloat(l.paid)||0;
+    let balance = parseFloat(l.balance)||0;
+    let interestRate = parseFloat(l.interest)||0;
+    let expectedInterest = totalPay - principal;
+
+    let ratio = principal / totalPay || 0;
+    let capReturn = balance<=0 ? principal : paid * ratio;
+    let interestCollected = balance<=0 ? expectedInterest : paid - capReturn;
+
+    let penaltyCollected=0;
+    if(l.payments) l.payments.forEach(p=> penaltyCollected+=parseFloat(p.penalty)||0);
+
+    totalCap+=principal; totalCollected+=paid; totalInterestCollected+=interestCollected; totalPenaltyCollected+=penaltyCollected; totalCapReturn+=capReturn;
+
+    // build payments breakdown
+    let payRows = "";
+    if(l.payments && l.payments.length>0){
+      // sort by date
+      let sorted = [...l.payments].sort((a,b)=> new Date(a.date)-new Date(b.date));
+      sorted.forEach((p,i)=>{
+        payRows += `<tr>
+          <td>${i+1}</td>
+          <td>${formatDate(p.date)}</td>
+          <td>₱${parseFloat(p.amount).toFixed(2)}</td>
+          <td class="red">₱${(parseFloat(p.penalty)||0).toFixed(2)}</td>
+          <td>${p.date}</td>
+        </tr>`;
+      });
+    } else {
+      payRows = `<tr><td colspan="5" style="text-align:center;color:#999;">Wala pang hulog</td></tr>`;
+    }
+
+    html+=`
+    <div class="borrower-card" data-name="${l.name}">
+      <div class="borrower-head" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display==='block' ? 'none' : 'block'">
+        <div>
+          <b>${l.name}</b> <span class="badge" style="background:${balance<=0?'#28a745':'#ff6b35'}">${balance<=0?'PAID':'ACTIVE'}</span><br>
+          <small>Principal: ₱${principal.toFixed(2)} | Interest: ${interestRate}% | Dapat Tubo: ₱${expectedInterest.toFixed(2)} | Binayad: ₱${paid.toFixed(2)} | Balance: ₱${balance.toFixed(2)}</small>
+        </div>
+        <div>▼</div>
+      </div>
+      <div class="payments">
+        <p><b>Tubo na Nakolekta:</b> <span class="green">₱${interestCollected.toFixed(2)}</span> | <b>Penalty:</b> <span class="red">₱${penaltyCollected.toFixed(2)}</span> | <b>Due Date:</b> ${formatDate(l.dueDate)}</p>
+        <table>
+          <thead><tr><th>#</th><th>Date Hulog</th><th>Amount</th><th>Penalty that day</th><th>Raw Date</th></tr></thead>
+          <tbody>${payRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById("borrowerList").innerHTML = html || "<p style='text-align:center;color:#999;'>No records</p>";
+  document.getElementById("cap").innerText = `₱${totalCap.toFixed(2)}`;
+  document.getElementById("collected").innerText = `₱${totalCollected.toFixed(2)}`;
+  document.getElementById("net").innerText = `₱${(totalInterestCollected+totalPenaltyCollected).toFixed(2)}`;
+  document.getElementById("capReturn").innerText = `₱${totalCapReturn.toFixed(2)}`;
+}
+</script>
+</body>
+  </html>
