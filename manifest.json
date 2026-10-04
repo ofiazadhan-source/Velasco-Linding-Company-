@@ -1,0 +1,25 @@
+{
+  "name": "LINDING COOP - Ulingan Lawang Bato Valenzuela",
+  "short_name": "LINDING COOP",
+  "description": "LINDING COOP Lending System - 5% Monthly, Payments & Collection",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ff6a00",
+  "theme_color": "#ff6a00",
+  "orientation": "portrait",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
