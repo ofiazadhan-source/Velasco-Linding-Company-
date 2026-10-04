@@ -1,65 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LINDING COOP</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINDING COOP - Ulingan Lawang Bato</title>
 <style>
-*{box-sizing:border-box;font-family:"Segoe UI",Arial}body{margin:0;background:#f2f2f2}
-.top{background:#ff6b00;color:#fff;padding:16px 18px;display:flex;justify-content:space-between}
-.top h1{margin:0;font-size:20px;letter-spacing:1px}.top p{margin:0;font-size:12px;opacity:.9}
-.wrap{max-width:500px;margin:0 auto;padding:12px}
-.stats{background:#fff;border-radius:20px;padding:14px;display:flex;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,.06)}
-.stat{flex:1;text-align:center;padding:14px;border-radius:16px}.stat b{font-size:28px;display:block}
-.p{background:#fff3e0;color:#e65100}.a{background:#e8f5e9;color:#2e7d32}.d{background:#fce4ec;color:#c62828}
-.card{background:#fff;border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center;margin-top:12px;box-shadow:0 4px 10px rgba(0,0,0,.05);cursor:pointer;border-left:5px solid #ff6b00}
-.icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#fff3e0}
-.text h3{margin:0;font-size:15px}.text p{margin:2px 0 0;font-size:11px;color:#888}
-.new{margin-left:auto;background:#ff6b00;color:#fff;font-size:10px;padding:4px 10px;border-radius:20px;font-weight:bold}
-.search{background:#fff;padding:12px;border-radius:14px;display:flex;gap:8px;margin-top:16px}
-.search input{flex:1;padding:13px;border:1px solid #ddd;border-radius:10px}
-.search button{background:#ff6b00;color:#fff;border:none;padding:13px 18px;border-radius:10px;font-weight:bold}
+*{box-sizing:border-box;font-family:Arial,sans-serif}
+body{margin:0;background:#f5f5f5}
+.header{background:#ff6a00;color:white;padding:16px;display:flex;justify-content:space-between;align-items:center}
+.counts{display:flex;gap:10px;padding:12px}
+.count{flex:1;background:white;border-radius:16px;padding:15px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.count b{font-size:28px;display:block}
+.count.PENDING b{color:#ea580c}.count.APPROVED b{color:#15803d}.count.DECLINED b{color:#b91c1c}
+.menu{padding:12px;display:flex;flex-direction:column;gap:12px}
+.item{background:white;border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);text-decoration:none;color:#111;border-left:5px solid orange;cursor:pointer}
+.item:nth-child(2){border-left-color:#f59e0b}.item:nth-child(3){border-left-color:#16a34a}.item:nth-child(4){border-left-color:#2563eb}
+.icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#fff7ed}
+.item small{color:#666}
+.badge-new{background:#ff6a00;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;margin-left:auto}
+.search{margin:12px;background:white;padding:12px;border-radius:16px;display:flex;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.search input{flex:1;padding:12px;border:1px solid #ddd;border-radius:10px}
+.search button{background:#ff6a00;color:white;border:none;padding:12px 20px;border-radius:10px;font-weight:bold}
+.footer{text-align:center;padding:12px;color:#999;font-size:11px}
 </style>
 </head>
 <body>
-<div class="top"><div><h1>LINDING COOP</h1><p>Ulingan Lawang Bato Valenzuela</p></div><div style="font-size:30px">🏦</div></div>
-<div class="wrap">
-<div class="stats">
-<div class="stat p"><b id="cPending">0</b><span style="font-size:12px">PENDING</span></div>
-<div class="stat a"><b id="cApproved">0</b><span style="font-size:12px">APPROVED</span></div>
-<div class="stat d"><b id="cDeclined">0</b><span style="font-size:12px">DECLINED</span></div>
+<div class="header">
+<div><b style="font-size:20px;letter-spacing:1px">LINDING COOP</b><br><small>Ulingan Lawang Bato Valenzuela</small></div>
+<div style="font-size:32px">🏦</div>
 </div>
 
-<div class="card" onclick="location.href='apply.html'"><div class="icon">📝</div><div class="text"><h3>New Loan Application</h3><p>Fill-up form + NEXT + Upload UMID/SSS</p></div><span class="new">NEW</span></div>
-<div class="card" style="border-left-color:#ffb020" onclick="document.getElementById('checkBox').scrollIntoView({behavior:'smooth'})"><div class="icon" style="background:#fff8e1">🔍</div><div class="text"><h3>Check My Status</h3><p>PENDING / APPROVED / DECLINE</p></div></div>
-<div class="card" style="border-left-color:#2e7d32" onclick="location.href='loans.html'"><div class="icon" style="background:#e8f5e9">💰</div><div class="text"><h3>Manage Loans (ADMIN)</h3><p>Approve / Decline + View ID + Co-Maker</p></div></div>
-<div class="card" style="border-left-color:#1976d2" onclick="location.href='payments.html'"><div class="icon" style="background:#e3f2fd">💳</div><div class="text"><h3>Payments & Collection</h3><p>Weekly payment record</p></div></div>
-
-<div class="search" id="checkBox"><input id="loanIdInput" placeholder="Paste Loan ID galing sa status.html"><button onclick="goCheck()">CHECK</button></div>
-<p style="font-size:11px;color:#888;text-align:center;margin-top:8px;">After mo mag-submit, makukuha mo yung Loan ID sa link. I-paste mo dito para macheck status.</p>
-<p style="text-align:center;font-size:11px;color:#aaa;margin-top:10px;">LINDING COOP v2.0 • Firebase: dhan-siomai-pos-fe1e5</p>
+<div class="counts">
+<div class="count PENDING"><b id="pendingCount">0</b><small>PENDING</small></div>
+<div class="count APPROVED"><b id="approvedCount">0</b><small>APPROVED</small></div>
+<div class="count DECLINED"><b id="declinedCount">0</b><small>DECLINED</small></div>
 </div>
+
+<div class="menu">
+<a class="item" href="apply.html"><div class="icon">📝</div><div><b>New Loan Application</b><br><small>Fill-up form + NEXT + Upload UMID/SSS</small></div><span class="badge-new">NEW</span></a>
+<a class="item" href="status.html"><div class="icon">🔍</div><div><b>Check My Status</b><br><small>PENDING / APPROVED / DECLINE</small></div></a>
+<a class="item" href="loans.html"><div class="icon">💰</div><div><b>Manage Loans (ADMIN)</b><br><small>Approve / Decline + View ID + Co-Maker</small></div></a>
+<a class="item" href="payments.html"><div class="icon">💳</div><div><b>Payments & Collection</b><br><small>Weekly payment record</small></div></a>
+</div>
+
+<div class="search">
+<input id="loanIdInput" placeholder="Paste Loan ID galing sa status.html">
+<button onclick="checkId()">CHECK</button>
+</div>
+<div style="text-align:center;padding:0 15px;color:#777;font-size:12px">After mo mag-submit, makukuha mo yung Loan ID sa link. I-paste mo dito para macheck status.</div>
+<div class="footer">LINDING COOP v2.0 • Firebase: casino-plus-game • No-Storage Compressed ID (70KB)</div>
 
 <script type="module">
 import { db } from "./firebase-config.js";
-import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// LIVE COUNT NG PENDING/APPROVED/DECLINED
-onSnapshot(collection(db,"loans"), snap=>{
-  let p=0,a=0,d=0;
-  snap.forEach(doc=>{ 
-    let s = doc.data().status;
-    if(s=="PENDING") p++; else if(s=="APPROVED") a++; else if(s=="DECLINED") d++;
-  });
-  document.getElementById('cPending').innerText = p;
-  document.getElementById('cApproved').innerText = a;
-  document.getElementById('cDeclined').innerText = d;
-});
-
-window.goCheck = function(){
-  let id = document.getElementById('loanIdInput').value.trim();
-  if(!id) return alert("Paste mo muna Loan ID boss");
-  location.href = `status.html?id=${id}`;
+async function loadCounts(){
+  try{
+    const snap = await getDocs(collection(db,"loans"));
+    let p=0,a=0,d=0;
+    snap.forEach(doc=>{ const s=doc.data().status; if(s==="PENDING")p++; else if(s==="APPROVED")a++; else if(s==="DECLINED")d++; });
+    document.getElementById('pendingCount').textContent=p;
+    document.getElementById('approvedCount').textContent=a;
+    document.getElementById('declinedCount').textContent=d;
+  }catch(e){ console.log(e); }
 }
+window.checkId=()=>{ const id=document.getElementById('loanIdInput').value.trim(); if(!id){alert("Paste mo muna Loan ID");return;} location.href="status.html?id="+id; }
+loadCounts();
 </script>
 </body>
 </html>
