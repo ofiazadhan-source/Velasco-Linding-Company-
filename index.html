@@ -1,102 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LINDING COOP - Main Menu</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINDING COOP</title>
 <style>
-*{box-sizing:border-box;font-family:"Segoe UI",Arial;}
-body{margin:0;background:#f5f5f5;}
-.top{background:#ff6b00;color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;}
-.top h1{margin:0;font-size:20px;letter-spacing:1px;}
-.top span{font-size:13px;opacity:.9;}
-.wrap{max-width:500px;margin:0 auto;padding:14px;}
-.card-stats{background:white;border-radius:20px;padding:16px;display:flex;gap:10px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,.06);}
-.stat{flex:1;text-align:center;padding:10px;border-radius:14px;}
-.stat b{display:block;font-size:20px;}
+*{box-sizing:border-box;font-family:"Segoe UI",Arial}body{margin:0;background:#f2f2f2}
+.top{background:#ff6b00;color:#fff;padding:16px 18px;display:flex;justify-content:space-between}
+.top h1{margin:0;font-size:20px;letter-spacing:1px}.top p{margin:0;font-size:12px;opacity:.9}
+.wrap{max-width:500px;margin:0 auto;padding:12px}
+.stats{background:#fff;border-radius:20px;padding:14px;display:flex;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.stat{flex:1;text-align:center;padding:14px;border-radius:16px}.stat b{font-size:28px;display:block}
 .p{background:#fff3e0;color:#e65100}.a{background:#e8f5e9;color:#2e7d32}.d{background:#fce4ec;color:#c62828}
-.menu{display:grid;gap:12px;margin-top:10px;}
-.menu-card{background:white;border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 12px rgba(0,0,0,.05);cursor:pointer;border-left:5px solid #ff6b00;transition:.2s;}
-.menu-card:active{transform:scale(.97);}
-.icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;background:#fff0e0;}
-.text h2{margin:0;font-size:16px;color:#222;}
-.text p{margin:2px 0 0;font-size:12px;color:#888;}
-.badge-new{background:#ff6b00;color:white;font-size:10px;padding:3px 8px;border-radius:20px;margin-left:auto;}
-.search-box{margin-top:14px;background:white;padding:12px;border-radius:14px;display:flex;gap:8px;}
-.search-box input{flex:1;border:1px solid #ddd;border-radius:10px;padding:12px;}
-.search-box button{background:#ff6b00;color:white;border:none;border-radius:10px;padding:12px 16px;font-weight:bold;}
+.card{background:#fff;border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center;margin-top:12px;box-shadow:0 4px 10px rgba(0,0,0,.05);cursor:pointer;border-left:5px solid #ff6b00}
+.icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#fff3e0}
+.text h3{margin:0;font-size:15px}.text p{margin:2px 0 0;font-size:11px;color:#888}
+.new{margin-left:auto;background:#ff6b00;color:#fff;font-size:10px;padding:4px 10px;border-radius:20px;font-weight:bold}
+.search{background:#fff;padding:12px;border-radius:14px;display:flex;gap:8px;margin-top:16px}
+.search input{flex:1;padding:13px;border:1px solid #ddd;border-radius:10px}
+.search button{background:#ff6b00;color:#fff;border:none;padding:13px 18px;border-radius:10px;font-weight:bold}
 </style>
 </head>
 <body>
-<div class="top">
-  <div><h1>LINDING COOP</h1><span>Ulingan Lawang Bato Valenzuela</span></div>
-  <div style="font-size:26px;">🏦</div>
+<div class="top"><div><h1>LINDING COOP</h1><p>Ulingan Lawang Bato Valenzuela</p></div><div style="font-size:30px">🏦</div></div>
+<div class="wrap">
+<div class="stats">
+<div class="stat p"><b id="cPending">0</b><span style="font-size:12px">PENDING</span></div>
+<div class="stat a"><b id="cApproved">0</b><span style="font-size:12px">APPROVED</span></div>
+<div class="stat d"><b id="cDeclined">0</b><span style="font-size:12px">DECLINED</span></div>
 </div>
 
-<div class="wrap">
+<div class="card" onclick="location.href='apply.html'"><div class="icon">📝</div><div class="text"><h3>New Loan Application</h3><p>Fill-up form + NEXT + Upload UMID/SSS</p></div><span class="new">NEW</span></div>
+<div class="card" style="border-left-color:#ffb020" onclick="document.getElementById('checkBox').scrollIntoView({behavior:'smooth'})"><div class="icon" style="background:#fff8e1">🔍</div><div class="text"><h3>Check My Status</h3><p>PENDING / APPROVED / DECLINE</p></div></div>
+<div class="card" style="border-left-color:#2e7d32" onclick="location.href='loans.html'"><div class="icon" style="background:#e8f5e9">💰</div><div class="text"><h3>Manage Loans (ADMIN)</h3><p>Approve / Decline + View ID + Co-Maker</p></div></div>
+<div class="card" style="border-left-color:#1976d2" onclick="location.href='payments.html'"><div class="icon" style="background:#e3f2fd">💳</div><div class="text"><h3>Payments & Collection</h3><p>Weekly payment record</p></div></div>
 
-  <div class="card-stats">
-    <div class="stat p"><b id="cPending">0</b><span style="font-size:11px;">PENDING</span></div>
-    <div class="stat a"><b id="cApproved">0</b><span style="font-size:11px;">APPROVED</span></div>
-    <div class="stat d"><b id="cDeclined">0</b><span style="font-size:11px;">DECLINED</span></div>
-  </div>
-
-  <div class="menu">
-
-    <div class="menu-card" style="border-left-color:#ff6b00;" onclick="location.href='apply.html'">
-      <div class="icon">📝</div>
-      <div class="text"><h2>New Loan Application</h2><p>Fill-up form + NEXT + Upload UMID/SSS</p></div>
-      <span class="badge-new">NEW</span>
-    </div>
-
-    <div class="menu-card" style="border-left-color:#ffb020;" onclick="document.getElementById('searchSec').scrollIntoView({behavior:'smooth'})">
-      <div class="icon" style="background:#fff8e1;">🔍</div>
-      <div class="text"><h2>Check My Status</h2><p>PENDING / APPROVED / DECLINE</p></div>
-    </div>
-
-    <div class="menu-card" style="border-left-color:#2e7d32;" onclick="location.href='loans.html'">
-      <div class="icon" style="background:#e8f5e9;">💰</div>
-      <div class="text"><h2>Manage Loans (ADMIN)</h2><p>Approve / Decline + View ID + Co-Maker</p></div>
-      <span class="badge-new" id="pendingBadge" style="display:none;">0 PENDING</span>
-    </div>
-
-    <div class="menu-card" style="border-left-color:#1976d2;" onclick="location.href='payments.html'">
-      <div class="icon" style="background:#e3f2fd;">💳</div>
-      <div class="text"><h2>Payments & Collection</h2><p>Weekly payment record</p></div>
-    </div>
-
-  </div>
-
-  <div class="search-box" id="searchSec" style="margin-top:20px;">
-    <input id="searchId" placeholder="Paste Loan ID galing sa status.html">
-    <button onclick="goStatus()">CHECK</button>
-  </div>
-  <p style="font-size:11px;color:#888;text-align:center;margin-top:6px;">After mo mag-submit, makukuha mo yung Loan ID sa link. I-paste mo dito para macheck status.</p>
-
-  <div style="text-align:center;margin-top:20px;color:#aaa;font-size:11px;">LINDING COOP v2.0 • Firebase: dhan-siomai-pos-fe1e5</div>
-
+<div class="search" id="checkBox"><input id="loanIdInput" placeholder="Paste Loan ID galing sa status.html"><button onclick="goCheck()">CHECK</button></div>
+<p style="font-size:11px;color:#888;text-align:center;margin-top:8px;">After mo mag-submit, makukuha mo yung Loan ID sa link. I-paste mo dito para macheck status.</p>
+<p style="text-align:center;font-size:11px;color:#aaa;margin-top:10px;">LINDING COOP v2.0 • Firebase: dhan-siomai-pos-fe1e5</p>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-const firebaseConfig = { apiKey: "AIzaSyDk3ZbOXuw3PEfJzdt8AI2ueJq5yksfekE", authDomain: "dhan-siomai-pos-fe1e5.firebaseapp.com", projectId: "dhan-siomai-pos-fe1e5", storageBucket: "dhan-siomai-pos-fe1e5.firebasestorage.app", messagingSenderId: "305932123173", appId: "1:305932123173:web:f27894a2d5e6e6ab8253cc" };
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db } from "./firebase-config.js";
+import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// LIVE COUNT NG PENDING/APPROVED/DECLINED
 onSnapshot(collection(db,"loans"), snap=>{
   let p=0,a=0,d=0;
-  snap.forEach(doc=>{ let s=doc.data().status; if(s=="PENDING") p++; if(s=="APPROVED") a++; if(s=="DECLINED") d++; });
-  document.getElementById('cPending').innerText=p;
-  document.getElementById('cApproved').innerText=a;
-  document.getElementById('cDeclined').innerText=d;
-  if(p>0){ let b=document.getElementById('pendingBadge'); b.style.display='block'; b.innerText=p+" PENDING"; }
+  snap.forEach(doc=>{ 
+    let s = doc.data().status;
+    if(s=="PENDING") p++; else if(s=="APPROVED") a++; else if(s=="DECLINED") d++;
+  });
+  document.getElementById('cPending').innerText = p;
+  document.getElementById('cApproved').innerText = a;
+  document.getElementById('cDeclined').innerText = d;
 });
 
-window.goStatus = function(){
-  let id = document.getElementById('searchId').value.trim();
+window.goCheck = function(){
+  let id = document.getElementById('loanIdInput').value.trim();
   if(!id) return alert("Paste mo muna Loan ID boss");
-  location.href=`status.html?id=${id}`;
+  location.href = `status.html?id=${id}`;
 }
 </script>
 </body>
