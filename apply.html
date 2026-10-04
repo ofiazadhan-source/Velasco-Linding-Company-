@@ -1,65 +1,65 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LINDING COOP - Apply</title>
-<style>body{font-family:Arial;padding:12px;background:#f5f5f5}.card{background:white;padding:15px;border-radius:14px} input,select,button{width:100%;padding:12px;margin:6px 0;border:1px solid #ddd;border-radius:8px} button{background:#ff6a00;color:white;border:none;font-weight:bold;font-size:16px} #preview{width:100%;max-width:300px;display:none;margin-top:10px;border-radius:10px}</style>
+<title>Apply - LINDING COOP 5% Monthly</title>
+<style>body{font-family:Arial;padding:12px;background:#f5f5f5}.card{background:white;padding:15px;border-radius:14px} input,select,button{width:100%;padding:12px;margin:6px 0;border:1px solid #ddd;border-radius:8px} button{background:#ff6a00;color:white;border:none;font-weight:bold} #preview{width:100%;max-width:300px;display:none;margin-top:10px;border-radius:10px}.comp{background:#dcfce7;padding:12px;border-radius:10px;margin:8px 0}</style>
 </head><body>
 <div class="card">
-<h2>LINDING COOP - Apply Loan</h2>
+<h2>LINDING COOP - 5% Monthly</h2>
 <form id="f">
 <input id="fullName" placeholder="Full Name" required>
 <input id="address" placeholder="Address" required>
-<input id="contact" placeholder="Contact No." required>
+<input id="contact" placeholder="Contact" required>
 <input id="coMaker" placeholder="Co-Maker Name" required>
 <input id="coMakerContact" placeholder="Co-Maker Contact" required>
 <input id="coMakerAddress" placeholder="Co-Maker Address" required>
-<select id="idType" required><option value="">Select ID Type</option><option>UMID</option><option>SSS</option><option>National ID</option></select>
-<label>Upload ID (Auto Compress to ~70KB):</label>
+<select id="idType" required><option value="">ID Type</option><option>UMID</option><option>SSS</option><option>National ID</option></select>
 <input type="file" id="idFile" accept="image/*" required>
 <img id="preview"><p id="info" style="font-size:12px;color:green"></p>
-<input id="amount" type="number" placeholder="Loan Amount" required>
-<button type="submit" id="btn">SUBMIT APPLICATION</button>
+
+<input id="amount" type="number" placeholder="Loan Amount e.g. 10000" required oninput="calc()">
+<select id="months" onchange="calc()" required>
+<option value="1">1 Month - 5% Interest</option>
+<option value="2">2 Months - 10% Interest (5% x 2)</option>
+<option value="3" selected>3 Months - 15% Interest (5% x 3) - Pinaka Common</option>
+</select>
+
+<div class="comp">
+<b>Computation (5% x Months):</b><br>
+Loan: ₱<span id="sLoan">0</span><br>
+Term: <span id="sMonths">3</span> months x 5% = <span id="sRate">15</span>%<br>
+Interest: ₱<span id="sInterest">0</span><br>
+Service Fee: ₱<span id="sFee">200</span><br>
+<b style="font-size:18px;color:green">Total Babayaran: ₱<span id="sTotal">0</span></b><br>
+Monthly: ₱<span id="sMonthly">0</span> / month<br>
+<small style="background:yellow;padding:2px 6px">Kita ng COOP: ₱<span id="sProfit">0</span></small>
+</div>
+
+<button type="submit" id="btn">SUBMIT</button>
 </form>
 </div>
 <script type="module">
 import { db } from "./firebase-config.js";
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-let base64="";
-const fileInput=document.getElementById('idFile'), preview=document.getElementById('preview'), info=document.getElementById('info');
-fileInput.addEventListener('change', async e=>{
- const file=e.target.files[0]; if(!file)return;
- const orig=(file.size/1024).toFixed(0);
- info.textContent=`Original ${orig}KB - Compressing...`;
- base64=await compress(file);
- const comp=(base64.length*0.75/1024).toFixed(0);
- preview.src=base64; preview.style.display='block';
- info.textContent=`Original: ${orig}KB → Compressed: ${comp}KB (pinaka maliit!)`;
-});
-function compress(file){
- return new Promise(res=>{
-  const r=new FileReader();
-  r.onload=ev=>{
-   const img=new Image();
-   img.onload=()=>{
-    const c=document.createElement('canvas'); let w=img.width,h=img.height; const max=500;
-    if(w>h){ if(w>max){h*=max/w;w=max}} else{if(h>max){w*=max/h;h=max}}
-    c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
-    res(c.toDataURL('image/jpeg',0.28));
-   }; img.src=ev.target.result;
-  }; r.readAsDataURL(file);
- });
+let base64=""; const fileInput=document.getElementById('idFile'), preview=document.getElementById('preview'), info=document.getElementById('info');
+fileInput.addEventListener('change', async e=>{ const file=e.target.files[0]; if(!file)return; info.textContent=`Compressing ${ (file.size/1024).toFixed(0)}KB...`; base64=await compress(file); preview.src=base64; preview.style.display='block'; info.textContent=`Compressed: ${(base64.length*0.75/1024).toFixed(0)}KB - OK!`; });
+function compress(file){ return new Promise(res=>{ const r=new FileReader(); r.onload=ev=>{ const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas'); let w=img.width,h=img.height; const max=500; if(w>h){ if(w>max){h*=max/w;w=max}} else{if(h>max){w*=max/h;h=max}} c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h); res(c.toDataURL('image/jpeg',0.28)); }; img.src=ev.target.result; }; r.readAsDataURL(file); }); }
+window.calc=()=>{
+  const amt=Number(amount.value||0); const m=Number(months.value||3); const rate=m*5; const fee=200; const interest=amt*rate/100; const total=amt+interest+fee;
+  sLoan.textContent=amt; sMonths.textContent=m; sRate.textContent=rate; sInterest.textContent=interest; sFee.textContent=fee; sTotal.textContent=total; sMonthly.textContent=m>0?(total/m).toFixed(0):0; sProfit.textContent=interest+fee;
 }
 document.getElementById('f').addEventListener('submit', async e=>{
- e.preventDefault();
- const btn=document.getElementById('btn'); btn.textContent="UPLOADING..."; btn.disabled=true;
+ e.preventDefault(); const btn=document.getElementById('btn'); btn.textContent="UPLOADING..."; btn.disabled=true;
  try{
+  const amt=Number(amount.value); const m=Number(months.value); const rate=m*5; const interest=amt*rate/100; const fee=200; const total=amt+interest+fee;
   const ref=await addDoc(collection(db,"loans"),{
    fullName:fullName.value, address:address.value, contact:contact.value,
    coMaker:coMaker.value, coMakerContact:coMakerContact.value, coMakerAddress:coMakerAddress.value,
-   idType:idType.value, idImageBase64:base64, amount:Number(amount.value),
+   idType:idType.value, idImageBase64:base64, amount:amt,
+   months:m, interestRate:rate, interestAmount:interest, serviceFee:fee, totalDue:total, monthlyPayment:Math.ceil(total/m),
    status:"PENDING", createdAt:serverTimestamp()
   });
-  alert("SUCCESS! Compressed to ~70KB!");
+  alert(`SUCCESS! Total babayaran: ₱${total} for ${m} months`);
   location.href="status.html?id="+ref.id;
- }catch(err){ alert(err.message); btn.textContent="SUBMIT"; btn.disabled=false; }
+ }catch(err){ alert(err.message); btn.disabled=false; btn.textContent="SUBMIT"; }
 });
 </script></body></html>
