@@ -1,153 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manage Loans - LINDING COOP</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINDING COOP - Manage Loans (ADMIN)</title>
 <style>
-*{box-sizing:border-box;font-family:Segoe UI,Arial}body{margin:0;background:#f2f2f2}
-.top{background:#ff6b00;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
-.wrap{max-width:600px;margin:0 auto;padding:10px}
-.search-box{background:#fff;padding:10px;border-radius:12px;display:flex;gap:6px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
-.search-box input{flex:1;padding:12px;border:1px solid #ddd;border-radius:8px}
-.filter{display:flex;gap:6px;margin-bottom:10px;overflow:auto}
-.fbtn{padding:8px 14px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:12px;font-weight:bold;white-space:nowrap}
-.fbtn.active{background:#ff6b00;color:#fff;border-color:#ff6b00}
-.card{background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 4px 10px rgba(0,0,0,.06);border-left:5px solid #ffb020}
-.card.approved{border-left-color:#2e7d32}.card.declined{border-left-color:#c62828}
-.badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:bold;color:#fff;display:inline-block}
-.p{background:#ffb020}.a{background:#2e7d32}.d{background:#c62828}
-.row{display:flex;justify-content:space-between;font-size:13px;margin:3px 0}
-.btn{padding:10px 14px;border:none;border-radius:8px;font-weight:bold;font-size:12px;margin-top:8px;width:48%}
-.btn-approve{background:#2e7d32;color:#fff}.btn-decline{background:#c62828;color:#fff}.btn-view{background:#eee;width:100%}
-.idpic{width:100%;border-radius:8px;margin-top:6px;border:1px solid #ddd;display:none}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:100;padding:12px}
-.modal-box{background:#fff;padding:16px;border-radius:16px;width:100%;max-width:400px}
+*{box-sizing:border-box;font-family:Arial,sans-serif}
+body{margin:0;background:#f5f5f5;padding:15px}
+.header{background:#ff6a00;color:white;padding:15px;border-radius:12px;margin-bottom:15px}
+.card{background:white;padding:15px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);border-left:5px solid orange}
+.card.APPROVED{border-left-color:green}
+.card.DECLINED{border-left-color:red}
+.btn{padding:10px 14px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin-right:6px}
+.btn-approve{background:#16a34a;color:white}
+.btn-decline{background:#dc2626;color:white}
+.btn-view{background:#2563eb;color:white;width:100%;margin-top:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:14px;margin:8px 0}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal img{max-width:100%;max-height:90vh;border-radius:12px;background:white;padding:5px}
+.modal.show{display:flex}
 </style>
 </head>
 <body>
-<div class="top"><span onclick="location.href='index.html'" style="font-size:20px">⬅️</span><b>Manage Loans (ADMIN)</b></div>
-<div class="wrap">
-<div class="search-box"><input id="searchInput" placeholder="Search name, contact, ID number..."><button onclick="loadLoans()" style="background:#ff6b00;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:bold">Search</button></div>
-<div class="filter">
-<button class="fbtn active" onclick="setFilter('ALL',this)">ALL</button>
-<button class="fbtn" onclick="setFilter('PENDING',this)">PENDING</button>
-<button class="fbtn" onclick="setFilter('APPROVED',this)">APPROVED</button>
-<button class="fbtn" onclick="setFilter('DECLINED',this)">DECLINED</button>
-</div>
-<div id="list">Loading loans...</div>
+<div class="header">
+<h2 style="margin:0">Manage Loans (ADMIN)</h2>
+<small>Firebase: casino-plus-game | No Storage - Base64 ID</small><br>
+<small id="counts">Loading...</small>
+<br><button onclick="location.href='index.html'" style="margin-top:8px;padding:6px 12px">← Back to Menu</button>
 </div>
 
-<!-- VIEW ID MODAL -->
-<div id="viewModal" class="modal" onclick="if(event.target==this)this.style.display='none'"><div class="modal-box">
-<b id="viewName"></b><br><small id="viewSub"></small>
-<img id="viewFront" class="idpic" style="display:block">
-<img id="viewBack" class="idpic" style="display:block;margin-top:8px">
-<div style="margin-top:10px;font-size:12px;line-height:1.8" id="viewDetails"></div>
-<button onclick="document.getElementById('viewModal').style.display='none'" style="width:100%;padding:12px;border:none;background:#eee;border-radius:8px;margin-top:10px;font-weight:bold">Close</button>
-</div></div>
+<div id="loanList">Loading loans...</div>
 
-<!-- DECLINE MODAL -->
-<div id="declineModal" class="modal"><div class="modal-box">
-<b>Decline Reason</b><br>
-<textarea id="declineReason" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-top:8px" rows="3" placeholder="Ex: Malabo ID, Incomplete info"></textarea>
-<button onclick="confirmDecline()" style="width:100%;padding:12px;background:#c62828;color:#fff;border:none;border-radius:8px;margin-top:10px;font-weight:bold">CONFIRM DECLINE</button>
-<button onclick="document.getElementById('declineModal').style.display='none'" style="width:100%;padding:12px;background:#eee;border:none;border-radius:8px;margin-top:6px">Cancel</button>
-</div></div>
+<!-- ID Modal -->
+<div id="idModal" class="modal" onclick="this.classList.remove('show')">
+<img id="modalImg" src="">
+</div>
 
 <script type="module">
 import { db } from "./firebase-config.js";
-import { collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getDocs, updateDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-let allLoans = [];
-let filterStatus = "ALL";
-let toDeclineId = null;
+const list = document.getElementById('loanList');
+const counts = document.getElementById('counts');
+const modal = document.getElementById('idModal');
+const modalImg = document.getElementById('modalImg');
 
-window.setFilter = (s,btn)=>{
-  filterStatus=s;
-  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  render();
-}
-
-onSnapshot(collection(db,"loans"), snap=>{
-  allLoans=[];
-  snap.forEach(d=>{ allLoans.push({id:d.id, ...d.data()}); });
-  // pinakabago sa taas
-  allLoans.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-  render();
-});
-
-function render(){
-  let search = document.getElementById('searchInput').value.toLowerCase();
+async function loadLoans(){
+  const q = query(collection(db,"loans"), orderBy("createdAt","desc"));
+  const snap = await getDocs(q);
+  let pending=0, approved=0, declined=0;
   let html="";
-  let filtered = allLoans.filter(l=>{
-    if(filterStatus!="ALL" && l.status!=filterStatus) return false;
-    if(search && !`${l.name} ${l.contact} ${l.idNumber} ${l.comaker}`.toLowerCase().includes(search)) return false;
-    return true;
-  });
+  snap.forEach(d=>{
+    const data = d.data();
+    const id = d.id;
+    if(data.status==="PENDING") pending++;
+    if(data.status==="APPROVED") approved++;
+    if(data.status==="DECLINED") declined++;
 
-  if(filtered.length==0){ document.getElementById('list').innerHTML="<p style='text-align:center;color:#888'>No loans found</p>"; return; }
+    // check both old url and new base64
+    const hasID = data.idImageBase64 || data.idImageUrl;
+    const sizeKB = data.idImageBase64 ? (data.idImageBase64.length * 0.75 / 1024).toFixed(0)+"KB" : "External URL";
 
-  filtered.forEach(l=>{
     html+=`
-    <div class="card ${l.status=='APPROVED'?'approved':''} ${l.status=='DECLINED'?'declined':''}">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <b style="font-size:15px">${l.name}</b>
-        <span class="badge ${l.status=='PENDING'?'p':l.status=='APPROVED'?'a':'d'}">${l.status}</span>
+    <div class="card ${data.status}">
+      <b>${data.fullName || 'No Name'}</b> - <span style="color:${data.status==='PENDING'?'orange':data.status==='APPROVED'?'green':'red'}">${data.status}</span>
+      <div class="grid">
+        <div><b>Address:</b> ${data.address||''}</div>
+        <div><b>Contact:</b> ${data.contact||''}</div>
+        <div><b>Amount:</b> ₱${data.amount||0}</div>
+        <div><b>ID Type:</b> ${data.idType||''} (${sizeKB})</div>
+        <div style="grid-column:span 2"><b>Co-Maker:</b> ${data.coMaker||''}</div>
+        <div><b>Co-Maker Contact:</b> ${data.coMakerContact||'N/A'}</div>
+        <div><b>Co-Maker Address:</b> ${data.coMakerAddress||'N/A'}</div>
       </div>
-      <div class="row"><span>Amount:</span><b>₱${l.amount} • ${l.term}wks • Weekly ₱${l.weekly}</b></div>
-      <div class="row"><span>Contact:</span><span>${l.contact}</span></div>
-      <div class="row"><span>ID:</span><span>${l.validId} - ${l.idNumber}</span></div>
-      <div class="row"><span>Co-Maker:</span><span>${l.comaker||'N/A'} / ${l.comakerContact||''}</span></div>
-      <div class="row"><span>Date:</span><span>${l.dateLoan||''}</span></div>
-      <div style="font-size:11px;color:#888;word-break:break-all;margin-top:6px">ID: ${l.id}</div>
-      
-      <button class="btn-view" style="padding:10px;border:none;border-radius:8px;font-weight:bold;background:#fff3e0;margin-top:10px;width:100%" onclick="viewLoan('${l.id}')">👁️ View ID + Co-Maker Address</button>
-      
-      ${l.status=='PENDING'?`
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-approve" onclick="approveLoan('${l.id}')">✅ APPROVE</button>
-        <button class="btn btn-decline" onclick="openDecline('${l.id}')">❌ DECLINE</button>
-      </div>`:''}
-      ${l.status!='PENDING'?`<div class="row" style="margin-top:6px"><span>Due:</span><b>${l.dueDate||''}</b></div>`:''}
-      ${l.status=='DECLINED'&&l.declineReason?`<div style="font-size:12px;color:#c62828;background:#ffebee;padding:6px;border-radius:6px;margin-top:6px">Reason: ${l.declineReason}</div>`:''}
+      <div style="font-size:11px;color:#666">ID: ${id} | ${data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : ''}</div>
+      ${hasID ? `<button class="btn btn-view" onclick="viewID('${id}')">👁️ VIEW UMID/SSS ID (${sizeKB})</button>` : `<div style="color:red">No ID Uploaded</div>`}
+      ${data.status==='PENDING' ? `
+        <div style="margin-top:10px">
+          <button class="btn btn-approve" onclick="updateStatus('${id}','APPROVED')">✓ APPROVE</button>
+          <button class="btn btn-decline" onclick="updateStatus('${id}','DECLINED')">X DECLINE</button>
+        </div>` : ``}
     </div>`;
   });
-  document.getElementById('list').innerHTML=html;
-}
-window.loadLoans = render;
-document.getElementById('searchInput').addEventListener('input', render);
-
-window.viewLoan = (id)=>{
-  let l = allLoans.find(x=>x.id==id);
-  document.getElementById('viewName').innerText = l.name;
-  document.getElementById('viewSub').innerText = `${l.validId} - ${l.idNumber} | ${l.contact} | ${l.address}`;
-  document.getElementById('viewFront').src = l.idFrontUrl;
-  document.getElementById('viewBack').src = l.idBackUrl;
-  document.getElementById('viewDetails').innerHTML = `
-    <b>Co-Maker:</b> ${l.comaker}<br>
-    <b>Contact:</b> ${l.comakerContact}<br>
-    <b>Address:</b> ${l.comakerAddress}<br><br>
-    <b>Loan:</b> ₱${l.amount} | <b>Total:</b> ₱${l.total} | <b>Weekly:</b> ₱${l.weekly}<br>
-    <b>Term:</b> ${l.term} weeks | <b>Interest:</b> ${l.interest}%
-  `;
-  document.getElementById('viewModal').style.display='flex';
+  list.innerHTML = html || "Wala pang loans";
+  counts.textContent = `PENDING: ${pending} | APPROVED: ${approved} | DECLINED: ${declined} | TOTAL: ${snap.size}`;
+  window._loansCache = snap;
 }
 
-window.approveLoan = async (id)=>{
-  if(!confirm("I-APPROVE mo na si "+ allLoans.find(l=>l.id==id).name +"?")) return;
-  await updateDoc(doc(db,"loans",id),{ status:"APPROVED", approvedAt:new Date() });
-  alert("APPROVED na!");
+window.viewID = async (loanId)=>{
+  const snap = window._loansCache;
+  let imgSrc="";
+  snap.forEach(d=>{ if(d.id===loanId){ imgSrc = d.data().idImageBase64 || d.data().idImageUrl || ""; } });
+  if(!imgSrc){ alert("No ID found"); return; }
+  modalImg.src = imgSrc;
+  modal.classList.add('show');
 }
 
-window.openDecline = (id)=>{ toDeclineId=id; document.getElementById('declineModal').style.display='flex'; }
-window.confirmDecline = async ()=>{
-  let reason = document.getElementById('declineReason').value || "Incomplete";
-  await updateDoc(doc(db,"loans",toDeclineId),{ status:"DECLINED", declineReason:reason });
-  document.getElementById('declineModal').style.display='none';
-  document.getElementById('declineReason').value="";
-  alert("DECLINED");
+window.updateStatus = async (id, newStatus)=>{
+  if(!confirm(`I-${newStatus} mo ba loan na to?`)) return;
+  await updateDoc(doc(db,"loans",id),{status:newStatus});
+  alert(`Loan ${newStatus}!`);
+  loadLoans();
 }
+
+loadLoans();
 </script>
 </body>
-  </html>
+</html>
