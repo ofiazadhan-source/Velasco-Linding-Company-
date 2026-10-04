@@ -1,136 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Payments - LINDING COOP</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LINDING COOP - Payments</title>
 <style>
-*{box-sizing:border-box;font-family:Segoe UI,Arial}body{margin:0;background:#f2f2f2}
-.top{background:#1976d2;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
-.wrap{max-width:600px;margin:0 auto;padding:10px}
-.card{background:#fff;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 4px 10px rgba(0,0,0,.06);border-left:5px solid #1976d2}
-.badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:bold;color:#fff;background:#2e7d32}
-.row{display:flex;justify-content:space-between;font-size:13px;margin:4px 0}
-.progress{height:8px;background:#eee;border-radius:10px;overflow:hidden;margin:8px 0}
-.bar{height:100%;background:#1976d2}
-.btn{padding:11px;border:none;border-radius:10px;font-weight:bold;width:100%;margin-top:8px}
-.btn-pay{background:#1976d2;color:#fff}.btn-history{background:#eee}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:100;padding:12px}
-.modal-box{background:#fff;padding:16px;border-radius:16px;width:100%;max-width:400px;max-height:90vh;overflow:auto}
-.input{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-top:6px}
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;background:#f5f5f5;padding:12px}
+.header{background:#15803d;color:white;padding:15px;border-radius:12px}
+.card{background:white;padding:15px;border-radius:12px;margin:10px 0;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+input,select,button{width:100%;padding:12px;margin:6px 0;border:1px solid #ddd;border-radius:8px}
+button{background:#15803d;color:white;font-weight:bold;border:none;cursor:pointer}
+.row{display:flex;gap:8px}
+.badge{padding:4px 10px;border-radius:20px;font-size:12px;color:white}
+.list-item{border-bottom:1px solid #eee;padding:10px 0;font-size:14px}
+.total{font-size:22px;font-weight:bold;color:#15803d}
 </style>
 </head>
 <body>
-<div class="top"><span onclick="location.href='index.html'" style="font-size:20px">⬅️</span><b>Payments & Collection</b></div>
-<div class="wrap">
-<div id="list">Loading APPROVED loans...</div>
+<div class="header">
+<b style="font-size:20px">💳 Payments & Collection</b><br>
+<small>Firebase: casino-plus-game | Weekly Singilan</small><br>
+<button onclick="location.href='index.html'" style="background:white;color:#15803d;width:auto;padding:6px 14px;margin-top:8px">← Back to Menu</button>
 </div>
 
-<!-- PAY MODAL -->
-<div id="payModal" class="modal"><div class="modal-box">
-<b id="payName"></b><br><small id="payInfo"></small>
-<div class="input" style="background:#f5f5f5;margin-top:10px"><b>Balance:</b> ₱<span id="payBalance">0</span><br><b>Weekly:</b> ₱<span id="payWeekly">0</span></div>
-<label style="font-size:12px;font-weight:bold;margin-top:10px;display:block">Amount Paid Today</label>
-<input id="payAmount" type="number" class="input" placeholder="ex: 1000">
-<label style="font-size:12px;font-weight:bold;margin-top:8px;display:block">Note (Week 1, Week 2, etc)</label>
-<input id="payNote" class="input" placeholder="Week 1 payment">
-<button class="btn btn-pay" onclick="confirmPay()">✅ Confirm Payment</button>
-<button class="btn btn-history" onclick="document.getElementById('payModal').style.display='none'">Cancel</button>
-</div></div>
+<div class="card">
+<h3 style="margin:0">Add Payment</h3>
+<select id="loanSelect"><option>Loading APPROVED loans...</option></select>
+<input id="payAmount" type="number" placeholder="Amount Paid (e.g. 500)">
+<input id="payDate" type="date">
+<select id="payType"><option>Weekly Payment</option><option>Partial Payment</option><option>Full Payment</option><option>Interest Only</option></select>
+<input id="collector" placeholder="Collector Name">
+<button onclick="addPayment()" id="payBtn">💾 SAVE PAYMENT</button>
+</div>
 
-<!-- HISTORY MODAL -->
-<div id="histModal" class="modal" onclick="if(event.target==this)this.style.display='none'"><div class="modal-box">
-<b>Payment History</b><div id="histList" style="margin-top:10px;font-size:13px"></div>
-<button class="btn btn-history" onclick="document.getElementById('histModal').style.display='none'">Close</button>
-</div></div>
+<div class="row">
+<div class="card" style="flex:1;text-align:center"><small>Total Collected Today</small><div class="total" id="todayTotal">₱0</div></div>
+<div class="card" style="flex:1;text-align:center"><small>Total All Payments</small><div class="total" id="allTotal">₱0</div></div>
+</div>
+
+<div class="card">
+<h3>Payment History</h3>
+<div id="payList">Loading...</div>
+</div>
+
+<div class="card">
+<h3>Outstanding Balance (APPROVED Loans)</h3>
+<div id="balanceList">Loading...</div>
+</div>
 
 <script type="module">
 import { db } from "./firebase-config.js";
-import { collection, onSnapshot, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getDocs, addDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-let loans=[];
-let currentId=null;
+let approvedLoans = {};
 
-onSnapshot(collection(db,"loans"), snap=>{
-  loans=[];
+async function loadApproved(){
+  const snap = await getDocs(query(collection(db,"loans"), where("status","==","APPROVED")));
+  const sel = document.getElementById('loanSelect');
+  let html = `<option value="">-- Piliin ang Member (APPROVED) --</option>`;
   snap.forEach(d=>{
-    let data=d.data();
-    if(data.status=="APPROVED") loans.push({id:d.id, ...data});
+    const data = d.data();
+    approvedLoans[d.id] = data;
+    html += `<option value="${d.id}">${data.fullName} - ₱${data.amount} - ${data.contact||''}</option>`;
   });
-  loans.sort((a,b)=> (b.approvedAt?.seconds||0) - (a.approvedAt?.seconds||0));
-  render();
-});
-
-function render(){
-  if(loans.length==0){ document.getElementById('list').innerHTML="<p style='text-align:center;color:#888;margin-top:30px'>Wala pang APPROVED. Mag-APPROVE ka muna sa Manage Loans.</p>"; return; }
-  let html="";
-  loans.forEach(l=>{
-    let paid = l.paidAmount || 0;
-    let total = l.total || l.amount || 0;
-    let remaining = total - paid;
-    let percent = total>0 ? (paid/total)*100 : 0;
-    let weekly = l.weekly || 0;
-    html+=`
-    <div class="card">
-      <div style="display:flex;justify-content:space-between"><b>${l.name||'No Name'}</b><span class="badge">APPROVED</span></div>
-      <div class="row"><span>Contact:</span><span>${l.contact||''}</span></div>
-      <div class="row"><span>Total Loan:</span><b>₱${total}</b></div>
-      <div class="row"><span>Paid:</span><span style="color:#2e7d32">₱${paid}</span></div>
-      <div class="row"><span>Balance:</span><b style="color:#c62828">₱${remaining}</b></div>
-      <div class="progress"><div class="bar" style="width:${percent}%"></div></div>
-      <div class="row"><span>Weekly:</span><span>₱${weekly} • Due: ${l.dueDate||''}</span></div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <button class="btn btn-pay" style="flex:1" onclick="openPay('${l.id}')">💳 Add Payment</button>
-        <button class="btn btn-history" style="flex:1" onclick="openHist('${l.id}')">📜 History</button>
-      </div>
+  sel.innerHTML = html;
+  if(snap.empty) sel.innerHTML = `<option>Wala pang APPROVED - Mag approve ka muna sa loans.html</option>`;
+  loadBalances();
+}
+async function loadPayments(){
+  const snap = await getDocs(query(collection(db,"payments"), orderBy("createdAt","desc")));
+  let html=""; let today=0, all=0;
+  const todayStr = new Date().toISOString().split('T')[0];
+  snap.forEach(d=>{
+    const p = d.data();
+    all += Number(p.amount||0);
+    if(p.date===todayStr) today += Number(p.amount||0);
+    const loan = approvedLoans[p.loanId] || {fullName: p.loanId};
+    html += `<div class="list-item">
+      <b>${loan.fullName||'Unknown'}</b> - ₱${p.amount} <span class="badge" style="background:${p.type==='Full Payment'?'#16a34a':'#f59e0b'}">${p.type||''}</span><br>
+      <small>${p.date} | Collector: ${p.collector||''} | Loan: ${p.loanId.substring(0,6)}...</small>
     </div>`;
   });
-  document.getElementById('list').innerHTML=html;
+  document.getElementById('payList').innerHTML = html || "Wala pang payment";
+  document.getElementById('todayTotal').textContent = "₱"+today;
+  document.getElementById('allTotal').textContent = "₱"+all;
 }
-
-window.openPay = (id)=>{
-  currentId=id;
-  let l=loans.find(x=>x.id==id);
-  document.getElementById('payName').innerText=l.name;
-  document.getElementById('payInfo').innerText=`${l.contact||''} • ${l.term||''} weeks`;
-  document.getElementById('payBalance').innerText=( (l.total||0) - (l.paidAmount||0) );
-  document.getElementById('payWeekly').innerText=l.weekly||0;
-  document.getElementById('payAmount').value=l.weekly||'';
-  document.getElementById('payNote').value='';
-  document.getElementById('payModal').style.display='flex';
-}
-
-window.confirmPay = async ()=>{
-  let amt=parseFloat(document.getElementById('payAmount').value);
-  let note=document.getElementById('payNote').value||'Payment';
-  if(!amt||amt<=0) return alert("Lagay mo amount boss");
-  let l=loans.find(x=>x.id==currentId);
-  let newPaid=(l.paidAmount||0)+amt;
-  let newRemaining=(l.total||0)-newPaid;
-  
-  await updateDoc(doc(db,"loans",currentId),{
-    paidAmount:newPaid,
-    remainingBalance:newRemaining,
-    payments: arrayUnion({amount:amt, note:note, date:new Date().toLocaleString(), timestamp:Date.now()}),
-    status: newRemaining<=0 ? "PAID" : "APPROVED"
-  });
-  document.getElementById('payModal').style.display='none';
-  alert(`Payment recorded! Balance na lang: ₱${newRemaining}`);
-}
-
-window.openHist = (id)=>{
-  let l=loans.find(x=>x.id==id);
-  let hist=l.payments||[];
-  if(hist.length==0){ document.getElementById('histList').innerHTML="<small style='color:#888'>Wala pang payment</small>"; }
-  else{
-    hist.sort((a,b)=>b.timestamp-a.timestamp);
-    document.getElementById('histList').innerHTML=hist.map(h=>`
-      <div style="background:#f5f5f5;padding:8px;border-radius:8px;margin-bottom:6px">
-        <b>₱${h.amount}</b> - ${h.note}<br><small style="color:#888">${h.date}</small>
-      </div>
-    `).join('');
+async function loadBalances(){
+  let html="";
+  const paySnap = await getDocs(collection(db,"payments"));
+  const paidMap = {};
+  paySnap.forEach(d=>{ const p=d.data(); paidMap[p.loanId]=(paidMap[p.loanId]||0)+Number(p.amount||0); });
+  for(const id in approvedLoans){
+    const loan = approvedLoans[id];
+    const paid = paidMap[id]||0;
+    const balance = (Number(loan.amount||0) - paid);
+    html+=`<div class="list-item"><b>${loan.fullName}</b> - Loan: ₱${loan.amount} | Paid: ₱${paid} | <span style="color:${balance<=0?'green':'red'};font-weight:bold">Balance: ₱${balance}</span><br><small>${loan.address||''} | ${loan.contact||''}</small></div>`;
   }
-  document.getElementById('histModal').style.display='flex';
+  document.getElementById('balanceList').innerHTML = html || "Wala pang APPROVED";
 }
+window.addPayment = async ()=>{
+  const loanId = document.getElementById('loanSelect').value;
+  const amount = document.getElementById('payAmount').value;
+  const date = document.getElementById('payDate').value || new Date().toISOString().split('T')[0];
+  const type = document.getElementById('payType').value;
+  const collector = document.getElementById('collector').value;
+  if(!loanId){ alert("Piliin mo muna member!"); return; }
+  if(!amount){ alert("Lagay mo amount!"); return; }
+  const btn = document.getElementById('payBtn'); btn.textContent="SAVING..."; btn.disabled=true;
+  try{
+    await addDoc(collection(db,"payments"),{
+      loanId, amount:Number(amount), date, type, collector,
+      createdAt: serverTimestamp()
+    });
+    alert("Payment Saved! ₱"+amount);
+    document.getElementById('payAmount').value="";
+    loadPayments(); loadBalances();
+  }catch(e){ alert(e.message); }
+  btn.textContent="💾 SAVE PAYMENT"; btn.disabled=false;
+}
+document.getElementById('payDate').valueAsDate = new Date();
+loadApproved().then(()=>loadPayments());
 </script>
 </body>
   </html>
