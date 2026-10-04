@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loan Status - LINDING COOP</title>
+<style>
+*{box-sizing:border-box;font-family:Segoe UI,Arial}body{margin:0;background:#f2f2f2;padding:12px}
+.top{background:#ff6b00;color:#fff;padding:14px;border-radius:0 0 16px 16px;text-align:center}
+.card{max-width:480px;margin:16px auto;background:#fff;padding:20px;border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,.1);text-align:center}
+.badge{padding:10px 20px;border-radius:30px;font-weight:900;color:#fff;display:inline-block;margin:12px 0;font-size:14px}
+.pending{background:#ffb020}.approved{background:#1aa65d}.declined{background:#e53935}
+.info{text-align:left;background:#fff8f0;padding:14px;border-radius:12px;margin:14px 0;font-size:13px;line-height:1.9}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-weight:bold;margin-top:8px}
+img.idpic{width:100%;border-radius:10px;margin-top:8px;border:1px solid #ddd}
+</style>
+</head>
+<body>
+<div class="top"><h2 style="margin:0;">LINDING COOP</h2><small>Ulingan Lawang Bato Valenzuela</small></div>
+<div class="card">
+<h3 style="margin:0;">Loan Application Status</h3>
+<div id="badge" class="badge pending">CHECKING...</div>
+<div id="box" class="info">Loading...</div>
+<div id="idPics"></div>
+<button class="btn" style="background:#eee" onclick="location.href='index.html'">⬅️ Back to Home</button>
+<button class="btn" style="background:#ff6b00;color:#fff" onclick="location.reload()">🔄 Refresh Status</button>
+<p style="font-size:10px;color:#888;margin-top:10px;">Loan ID: <span id="loanIdText"></span><br>Copy mo yang ID na yan, i-paste sa main menu para macheck ulit</p>
+</div>
+
+<script type="module">
+import { db } from "./firebase-config.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const id = new URLSearchParams(location.search).get('id');
+document.getElementById('loanIdText').innerText = id || "NO ID";
+if(!id){ document.getElementById('box').innerText="Walang ID. Mag-apply ka muna."; }
+
+async function load(){
+  if(!id) return;
+  const snap = await getDoc(doc(db,"loans",id));
+  if(!snap.exists()){ document.getElementById('box').innerText="Hindi nahanap sa Firebase"; return; }
+  const d = snap.data();
+  const badge = document.getElementById('badge');
+  if(d.status=="PENDING"){ badge.className="badge pending"; badge.innerText="⏳ PENDING - Wait for approval"; }
+  if(d.status=="APPROVED"){ badge.className="badge approved"; badge.innerText="✅ APPROVED"; }
+  if(d.status=="DECLINED"){ badge.className="badge declined"; badge.innerText="❌ DECLINED"; }
+
+  document.getElementById('box').innerHTML = `
+    <b>Name:</b> ${d.name}<br>
+    <b>Contact:</b> ${d.contact}<br>
+    <b>Address:</b> ${d.address}<br>
+    <b>ID:</b> ${d.validId} - ${d.idNumber}<br>
+    <b>Amount:</b> ₱${d.amount}<br>
+    <b>Term:</b> ${d.term} Weeks<br>
+    <b>Total w/ Interest:</b> ₱${d.total}<br>
+    <b>Weekly:</b> ₱${d.weekly}<br>
+    <b>Co-Maker:</b> ${d.comaker || ''}<br>
+    <b>Co-Maker Contact:</b> ${d.comakerContact || ''}<br>
+    <b>Co-Maker Address:</b> ${d.comakerAddress || ''}<br>
+    ${d.status=="APPROVED"?`<br><b>Due Date:</b> ${d.dueDate}`:''}
+    ${d.status=="DECLINED"?`<br><b>Reason:</b> ${d.declineReason || 'Incomplete'}`:''}
+  `;
+  document.getElementById('idPics').innerHTML = `
+    <p style="text-align:left;font-size:12px;font-weight:bold;margin:12px 0 4px;">ID Pictures:</p>
+    <img class="idpic" src="${d.idFrontUrl}"><small>Front</small>
+    <img class="idpic" src="${d.idBackUrl}"><small>Back</small>
+  `;
+}
+load();
+</script>
+</body>
+</html>
