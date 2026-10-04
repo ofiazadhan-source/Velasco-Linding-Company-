@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apply Loan - LINDING COOP</title>
+<style>
+*{box-sizing:border-box;font-family:Segoe UI,Arial}body{margin:0;background:#f2f2f2}
+.top{background:#ff6b00;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.wrap{max-width:500px;margin:0 auto;padding:12px}
+.white-box{background:#fff;border-radius:18px;padding:16px;margin-top:12px;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.label{font-size:12px;color:#555;margin:10px 0 4px;font-weight:600}
+.input{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-weight:bold;margin-top:14px}
+.btn-orange{background:#ff6b00;color:#fff}.btn-gray{background:#eee}
+.preview{width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-top:8px;display:none;border:1px solid #ddd}
+.step{display:none}.step.active{display:block}
+</style>
+</head>
+<body>
+<div class="top"><span onclick="location.href='index.html'" style="font-size:20px">⬅️</span><b>New Loan Application</b></div>
+<div class="wrap">
+
+<!-- STEP 1 -->
+<div id="step1" class="step active">
+<div class="white-box">
+<div style="font-weight:800;margin-bottom:10px;">Step 1 • Personal Info</div>
+<div class="label">Full Name</div><input id="name" class="input" placeholder="Juan Dela Cruz">
+<div class="label">Contact #</div><input id="contact" class="input" placeholder="09xxxxxxxxx">
+<div class="label">Address</div><input id="address" class="input" placeholder="Ulingan Lawang Bato">
+<div class="label">Valid ID Type</div>
+<select id="validId" class="input"><option>UMID</option><option>SSS ID</option><option>National ID</option><option>Driver's License</option></select>
+<div class="label">ID Number</div><input id="idNumber" class="input" placeholder="ID Number">
+<div class="label">ID Front Photo</div><input id="idFront" type="file" accept="image/*" class="input">
+<img id="prevFront" class="preview">
+<div class="label">ID Back Photo</div><input id="idBack" type="file" accept="image/*" class="input">
+<img id="prevBack" class="preview">
+<button class="btn btn-orange" onclick="goStep2()">NEXT ➡️</button>
+</div>
+</div>
+
+<!-- STEP 2 -->
+<div id="step2" class="step">
+<div class="white-box">
+<div style="font-weight:800;margin-bottom:10px;">Step 2 • Loan Details</div>
+<div class="label">Magkano Uutangin?</div><input id="amount" type="number" class="input" value="5000">
+<div class="label">Ilang Weeks?</div><select id="term" class="input"><option value="4">4 Weeks</option><option value="8">8 Weeks</option><option value="12">12 Weeks</option></select>
+<div class="label">Interest %</div><input id="interest" type="number" class="input" value="5">
+<div class="label">Petsa ng Utang</div><input id="dateLoan" type="date" class="input">
+
+<div style="margin-top:14px;font-weight:800;color:#ff6b00;">Co-Maker Info</div>
+<div class="label">Name ng Co-Maker</div><input id="comaker" class="input" placeholder="Name ng Co-Maker">
+<div class="label">Contact # ng Co-Maker</div><input id="comakerContact" class="input" placeholder="09xxxxxxxxx">
+<div class="label">Address ng Co-Maker</div><input id="comakerAddress" class="input" placeholder="Address ng Co-Maker">
+
+<div style="background:#fff8f0;padding:12px;border-radius:10px;margin-top:14px;font-size:13px;line-height:1.7;">
+<b>Computation:</b><br>
+Loan: ₱<span id="cLoan">5000</span><br>
+Interest: <span id="cInt">5</span>% = ₱<span id="cIntAmt">250</span><br>
+Total: ₱<span id="cTotal">5250</span><br>
+Weekly: ₱<span id="cWeekly">1312.5</span>
+</div>
+
+<button class="btn btn-orange" id="submitBtn" onclick="submitApp()">SUBMIT APPLICATION</button>
+<button class="btn btn-gray" onclick="backStep1()">⬅️ Back</button>
+</div>
+</div>
+
+</div>
+
+<script type="module">
+import { db, storage } from "./firebase-config.js";
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+const $ = id=>document.getElementById(id);
+let frontFile=null, backFile=null;
+
+$("idFront").addEventListener('change', e=>{
+  frontFile=e.target.files[0];
+  if(frontFile){ $("prevFront").src=URL.createObjectURL(frontFile); $("prevFront").style.display="block"; }
+});
+$("idBack").addEventListener('change', e=>{
+  backFile=e.target.files[0];
+  if(backFile){ $("prevBack").src=URL.createObjectURL(backFile); $("prevBack").style.display="block"; }
+});
+
+function compute(){
+  let a=parseFloat($("amount").value)||0; let i=parseFloat($("interest").value)||0; let t=parseFloat($("term").value)||4;
+  let intAmt=a*(i/100); let total=a+intAmt; let weekly=total/t;
+  $("cLoan").innerText=a; $("cInt").innerText=i; $("cIntAmt").innerText=intAmt; $("cTotal").innerText=total; $("cWeekly").innerText=weekly.toFixed(2);
+  return {total, weekly, intAmt};
+}
+$("amount").addEventListener('input',compute); $("interest").addEventListener('input',compute); $("term").addEventListener('change',compute);
+compute();
+$("dateLoan").valueAsDate = new Date();
+
+window.goStep2 = function(){
+  if(!$("name").value ||!$("contact").value ||!frontFile ||!backFile) return alert("Kumpletohin mo Name, Contact at ID Front/Back boss");
+  $("step1").classList.remove("active"); $("step2").classList.add("active"); window.scrollTo(0,0);
+}
+window.backStep1 = function(){ $("step2").classList.remove("active"); $("step1").classList.add("active"); }
+
+window.submitApp = async function(){
+  let btn=$("submitBtn"); btn.innerText="⏳ Uploading..."; btn.disabled=true;
+  try{
+    let fRef=ref(storage, `ids/${Date.now()}_front_${frontFile.name}`);
+    await uploadBytes(fRef, frontFile); let frontUrl=await getDownloadURL(fRef);
+    let bRef=ref(storage, `ids/${Date.now()}_back_${backFile.name}`);
+    await uploadBytes(bRef, backFile); let backUrl=await getDownloadURL(bRef);
+
+    let comp=compute();
+    let weekly=comp.weekly.toFixed(2);
+    let docRef = await addDoc(collection(db,"loans"),{
+      name:$("name").value, contact:$("contact").value, address:$("address").value,
+      validId:$("validId").value, idNumber:$("idNumber").value,
+      idFrontUrl:frontUrl, idBackUrl:backUrl,
+      amount:parseFloat($("amount").value), term:parseInt($("term").value),
+      interest:parseFloat($("interest").value), total:comp.total, weekly:weekly,
+      comaker:$("comaker").value, comakerContact:$("comakerContact").value, comakerAddress:$("comakerAddress").value,
+      dateLoan:$("dateLoan").value, dueDate:new Date(new Date().getTime() + parseInt($("term").value)*7*24*60*60*1000).toLocaleDateString(),
+      status:"PENDING", createdAt:new Date()
+    });
+    alert("Submitted! PENDING approval");
+    location.href=`status.html?id=${docRef.id}`;
+  }catch(e){ alert("Error: "+e.message); btn.innerText="SUBMIT APPLICATION"; btn.disabled=false; }
+}
+</script>
+</body>
+</html>
