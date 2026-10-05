@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LINDING COOP - Capital & Pondo</title>
+<style>
+*{box-sizing:border-box;font-family:Arial}body{margin:0;background:#f5f5f5;padding:12px}
+.header{background:#ff6a00;color:white;padding:15px;border-radius:12px}
+.card{background:white;padding:15px;border-radius:12px;margin:10px 0;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+input,select,button{width:100%;padding:12px;margin:6px 0;border:1px solid #ddd;border-radius:8px}
+button{background:#15803d;color:white;font-weight:bold;border:none}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.kpi{flex:1;min-width:140px;text-align:center;padding:12px}
+.total{font-size:22px;font-weight:bold}
+.green{color:#15803d}.red{color:#dc2626}.orange{color:#ff6a00}
+.list-item{border-bottom:1px solid #eee;padding:10px 0;font-size:13px}
+</style>
+</head><body>
+<div class="header">
+<b style="font-size:20px">🏦 Capital & Pondo</b><br>
+<small>Papasok lahat ng bayad dito - Kita mo pera mo!</small><br>
+<button onclick="location.href='index.html'" style="background:white;color:#ff6a00;width:auto;padding:6px 14px;margin-top:8px">← Back</button>
+</div>
+
+<div class="row">
+<div class="card kpi"><small>Total Capital (Puhunan)</small><div class="total green" id="totalCapital">₱0</div></div>
+<div class="card kpi"><small>Cash On Hand (Natitirang Pera)</small><div class="total" id="cashOnHand" style="color:#2563eb">₱0</div></div>
+<div class="card kpi"><small>Total Naipautang</small><div class="total red" id="totalLoaned">₱0</div></div>
+<div class="card kpi"><small>Total Nakolekta (Payments)</small><div class="total green" id="totalCollected">₱0</div></div>
+<div class="card kpi"><small>Total Tubo (Interest+Fee)</small><div class="total orange" id="totalProfit">₱0</div></div>
+<div class="card kpi"><small>Expenses</small><div class="total red" id="totalExpenses">₱0</div></div>
+</div>
+
+<div class="card">
+<h3 style="margin:0 0 8px 0">Add Capital / Puhunan / Expense</h3>
+<select id="type">
+<option value="capital_in">💰 Add Puhunan - Dagdag Pondo</option>
+<option value="expense">💸 Expense - Sahod / Pamasahe / Load</option>
+<option value="withdraw">🏧 Withdraw - Kuha ng Kita</option>
+</select>
+<input id="amount" type="number" placeholder="Amount e.g. 50000">
+<input id="desc" placeholder="Description e.g. Puhunan ni Boss, Sahod kay Rose">
+<input id="by" placeholder="By / Sino naglagay e.g. Boss Danny">
+<button onclick="addCapital()" id="btn">💾 SAVE</button>
+</div>
+
+<div class="card">
+<h3>Capital History</h3>
+<div id="capList">Loading...</div>
+</div>
+
+<div class="card" style="background:#fff7ed">
+<h3>Summary Computation</h3>
+<div style="font-size:14px;line-height:1.8" id="summary">Loading...</div>
+</div>
+
+<script type="module">
+import { db } from "./firebase-config.js";
+import { collection, getDocs, addDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+async function loadAll(){
+  const capSnap = await getDocs(query(collection(db,"capital"), orderBy("createdAt","desc")));
+  const loanSnap = await getDocs(collection(db,"loans"));
+  const paySnap = await getDocs(collection(db,"payments"));
+
+  let totalCapIn=0, totalExp=0, totalWithdraw=0, capHtml="";
+  capSnap.forEach(d=>{
+    const c=d.data(); const amt=Number(c.amount||0);
+    if(c.type==="capital_in") totalCapIn+=amt;
+    if(c.type==="expense") totalExp+=amt;
+    if(c.type==="withdraw") totalWithdraw+=amt;
+    capHtml+=`<div class="list-item">
+      <b style="color:${c.type==='capital_in'?'green':c.type==='expense'?'red':'orange'}">${c.type==='capital_in'?'💰 PUHUNAN':c.type==='expense'?'💸 EXPENSE':'🏧 WITHDRAW'} ₱${amt}</b> - ${c.description||''}<br>
+      <small>${c.date||''} | By: ${c.by||''}</small>
+    </div>`;
+  });
+
+  let totalLoaned=0, totalProfit=0;
+  loanSnap.forEach(d=>{
+    const l=d.data();
+    if(l.status==="APPROVED"){
+      totalLoaned+=Number(l.amount||0);
+      totalProfit+=Number(l.interestAmount||0)+Number(l.serviceFee||0);
+    }
+  });
+
+  let totalCollected=0;
+  paySnap.forEach(d=>{ totalCollected+=Number(d.data().amount||0); });
+
+  // FORMULA: Cash On Hand = Capital + Collected - Loaned - Expenses - Withdraw
+  const cashOnHand = totalCapIn + totalCollected - totalLoaned - totalExp - totalWithdraw;
+  const malinisNaTubo = totalProfit - totalExp;
+
+  document.getElementById('totalCapital').textContent="₱"+totalCapIn;
+  document.getElementById('totalLoaned').textContent="₱"+totalLoaned;
+  document.getElementById('totalCollected').textContent="₱"+totalCollected;
+  document.getElementById('totalProfit').textContent="₱"+totalProfit;
+  document.getElementById('totalExpenses').textContent="₱"+totalExp;
+  document.getElementById('cashOnHand').textContent="₱"+cashOnHand;
+  document.getElementById('capList').innerHTML=capHtml||"Wala pa";
+  document.getElementById('summary').innerHTML=`
+    Puhunan na pinasok: <b>₱${totalCapIn}</b><br>
+    + Lahat ng nakolekta sa payments: <b style="color:green">+ ₱${totalCollected}</b><br>
+    - Lahat ng naipautang (APPROVED): <b style="color:red">- ₱${totalLoaned}</b><br>
+    - Lahat ng expenses: <b style="color:red">- ₱${totalExp}</b><br>
+    - Na-withdraw na kita: <b style="color:red">- ₱${totalWithdraw}</b><br>
+    <hr>
+    <b style="font-size:18px">Cash On Hand: ₱${cashOnHand}</b><br><br>
+    Total Tubo (Interest+Fee): ₱${totalProfit}<br>
+    - Expenses: ₱${totalExp}<br>
+    <b style="color:${malinisNaTubo>=0?'green':'red'}">Malinis na Tubo: ₱${malinisNaTubo}</b><br><br>
+    ${cashOnHand<0?'<span style="color:red;font-weight:bold">⚠️ LUGI! Negative cash! Kailangan magdagdag ng puhunan!</span>':'<span style="color:green">✅ Safe pa pondo mo boss!</span>'}
+  `;
+}
+
+window.addCapital = async ()=>{
+  const type=document.getElementById('type').value;
+  const amount=document.getElementById('amount').value;
+  const desc=document.getElementById('desc').value;
+  const by=document.getElementById('by').value;
+  if(!amount){alert("Lagay mo amount!");return;}
+  const btn=document.getElementById('btn');btn.textContent="SAVING...";btn.disabled=true;
+  try{
+    await addDoc(collection(db,"capital"),{
+      type, amount:Number(amount), description:desc, by,
+      date:new Date().toISOString().split('T')[0],
+      createdAt:serverTimestamp()
+    });
+    alert("Saved!");
+    document.getElementById('amount').value="";document.getElementById('desc').value="";
+    loadAll();
+  }catch(e){alert(e.message);}
+  btn.textContent="💾 SAVE";btn.disabled=false;
+}
+loadAll();
+</script>
+</body>
+</html>
