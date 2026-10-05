@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RESET - LINDING COOP</title>
+<style>
+*{box-sizing:border-box;font-family:Arial}body{margin:0;background:#1f2937;padding:12px;color:white}
+.header{background:#dc2626;color:white;padding:15px;border-radius:12px;text-align:center}
+.card{background:white;color:#111;padding:15px;border-radius:12px;margin:10px 0}
+input,button{width:100%;padding:14px;margin:6px 0;border:1px solid #ddd;border-radius:8px}
+button{background:#dc2626;color:white;font-weight:bold;border:none;font-size:16px}
+.warn{background:#fee2e2;border:2px solid #dc2626;padding:12px;border-radius:10px;color:#991b1b;margin:10px 0}
+.count{font-size:28px;font-weight:bold;text-align:center}
+</style>
+</head><body>
+<div class="header">
+<b style="font-size:24px">⚠️ DANGER - RESET ALL DATA</b><br>
+<small>Buburahin lahat ng Loans, Payments, Capital</small><br>
+<button onclick="location.href='index.html'" style="background:white;color:#dc2626;width:auto;padding:6px 14px;margin-top:8px">← Back to Safe</button>
+</div>
+
+<div class="card">
+<div class="row" style="display:flex;gap:8px">
+<div style="flex:1;text-align:center"><div class="count" id="cLoans">-</div><small>LOANS</small></div>
+<div style="flex:1;text-align:center"><div class="count" id="cPays">-</div><small>PAYMENTS</small></div>
+<div style="flex:1;text-align:center"><div class="count" id="cCap">-</div><small>CAPITAL</small></div>
+</div>
+</div>
+
+<div class="card">
+<div class="warn">
+<b>⚠️ BABALA BOSS:</b><br>
+- Mabubura lahat ng test data mo (Dante etc)<br>
+- Hindi na maibabalik!<br>
+- Gawin mo lang to pag gusto mo magsimula ulit sa Puhunan!<br>
+- Pagkatapos nito, 0 lahat ulit.
+</div>
+
+<label>Type <b>RESET</b> para ma-enable:</label>
+<input id="confirmText" placeholder="Type RESET dito" oninput="checkConfirm()">
+
+<label>Admin Password:</label>
+<input id="adminPass" type="password" placeholder="Password: LINDING2026" oninput="checkConfirm()">
+
+<button id="resetBtn" disabled style="opacity:.3" onclick="resetAll()">🗑️ BURAHIN LAHAT NG DATA</button>
+
+<div id="status" style="margin-top:10px;font-size:14px"></div>
+</div>
+
+<script type="module">
+import { db } from "./firebase-config.js";
+import { collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+async function loadCounts(){
+  const loans = await getDocs(collection(db,"loans"));
+  const pays = await getDocs(collection(db,"payments"));
+  const cap = await getDocs(collection(db,"capital"));
+  document.getElementById('cLoans').textContent=loans.size;
+  document.getElementById('cPays').textContent=pays.size;
+  document.getElementById('cCap').textContent=cap.size;
+}
+loadCounts();
+
+window.checkConfirm=()=>{
+  const t=document.getElementById('confirmText').value;
+  const p=document.getElementById('adminPass').value;
+  const btn=document.getElementById('resetBtn');
+  if(t==="RESET" && p==="LINDING2026"){
+    btn.disabled=false;btn.style.opacity="1";
+  }else{
+    btn.disabled=true;btn.style.opacity=".3";
+  }
+}
+
+window.resetAll=async()=>{
+  if(!confirm("SURE KA BOSS? Buburahin lahat? Hindi na maibabalik!")) return;
+  if(!confirm("LAST CHANCE BOSS! 0 lahat ulit?")) return;
+  const btn=document.getElementById('resetBtn');btn.textContent="BINUBURA...";btn.disabled=true;
+  const status=document.getElementById('status');
+  try{
+    status.textContent="Buburahin Loans...";
+    const loans = await getDocs(collection(db,"loans"));
+    for(const d of loans.docs){ await deleteDoc(doc(db,"loans",d.id)); }
+    
+    status.textContent="Buburahin Payments...";
+    const pays = await getDocs(collection(db,"payments"));
+    for(const d of pays.docs){ await deleteDoc(doc(db,"payments",d.id)); }
+    
+    status.textContent="Buburahin Capital...";
+    const cap = await getDocs(collection(db,"capital"));
+    for(const d of cap.docs){ await deleteDoc(doc(db,"capital",d.id)); }
+
+    status.innerHTML="<b style='color:green;font-size:18px'>✅ DONE BOSS! 0 NA LAHAT!</b><br>Balik ka sa Home - 0 0 0 na yan!";
+    loadCounts();
+    btn.textContent="✅ RESET DONE";
+  }catch(e){
+    status.textContent="Error: "+e.message;
+    btn.disabled=false;btn.textContent="🗑️ BURAHIN LAHAT";
+  }
+}
+</script>
+</body></html>
