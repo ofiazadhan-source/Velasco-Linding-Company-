@@ -1,25 +1,22 @@
 {
-  "name": "LINDING COOP - Ulingan Lawang Bato Valenzuela",
+  "name": "LINDING COOP - Firebase",
   "short_name": "LINDING COOP",
-  "description": "LINDING COOP Lending System - 5% Monthly, Payments & Collection",
-  "start_url": "./index.html",
+  "description": "Linding Coop Lending System - Firebase",
+  "start_url": "/Velasco-lending-coop/",
   "display": "standalone",
-  "background_color": "#ff6a00",
-  "theme_color": "#ff6a00",
+  "background_color": "#f5f5f5",
+  "theme_color": "#ff6b35",
   "orientation": "portrait",
-  "scope": "./",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2830/2830284.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2830/2830284.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
